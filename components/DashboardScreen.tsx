@@ -6,7 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TransactionItem } from "./TransactionItem";
 import { TransactionDetails } from "./TransactionDetails";
+import { Download } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable"; // ← Proper named import
 import type { Transaction } from "@/types/api";
+import { format } from "date-fns";
 
 interface Props {
   transactions: Transaction[] | null;
@@ -18,8 +22,46 @@ interface Props {
 export function DashboardScreen({ transactions, loading, error, onFinish }: Props) {
   const [selected, setSelected] = useState<Transaction | null>(null);
 
-  // Derived selection: auto-select first transaction when data loads and nothing is selected
-  const effectiveSelected = selected ?? (transactions && transactions.length > 0 ? transactions[0] : null);
+  const effectiveSelected =
+    selected ?? (transactions && transactions.length > 0 ? transactions[0] : null);
+
+  const downloadPDF = () => {
+    if (!transactions || transactions.length === 0) return;
+
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(20);
+    doc.text("KPLC Token History", 14, 22);
+
+    // Subtitle
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(`Generated on ${format(new Date(), "dd MMMM yyyy")}`, 14, 30);
+
+    // Table data
+    const tableData = transactions.map((t) => [
+      format(new Date(t.trnTimestamp), "dd MMM yyyy"),
+      `KES ${Number(t.trnAmount).toFixed(2)}`,
+      `${Number(t.trnUnits).toFixed(1)} kWh`,
+      t.tokenNo,
+      t.recptNo,
+      t.tariff || "N/A",
+    ]);
+
+    // Use the imported autoTable function directly (fully typed, no casting needed)
+    autoTable(doc, {
+      head: [["Date", "Amount (KES)", "Units (kWh)", "Token", "Receipt No.", "Tariff"]],
+      body: tableData,
+      startY: 40,
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 5, textColor: [30, 38, 46] },
+      headStyles: { fillColor: [60, 122, 137], textColor: [255, 255, 255] }, // #3c7a89
+      alternateRowStyles: { fillColor: [46, 71, 86], textColor: [255, 255, 255] }, // darker variant of #2e4756 with white text
+    });
+
+    doc.save("kplc-token-history.pdf");
+  };
 
   return (
     <div className="min-h-screen bg-[#16262e] text-white p-4 md:p-8">
@@ -57,20 +99,36 @@ export function DashboardScreen({ transactions, loading, error, onFinish }: Prop
 
         {transactions && transactions.length > 0 && !loading && !error && (
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Left: Transaction List */}
-            <div className="space-y-4 max-h-[80vh] overflow-y-auto no-scrollbar">
-              <h2 className="text-xl text-amber-500 font-semibold mb-4">Recent Transactions</h2>
-              {transactions.map((t) => (
-                <TransactionItem
-                  key={t.recptNo + t.trnTimestamp}
-                  transaction={t}
-                  isSelected={
-                    effectiveSelected?.recptNo === t.recptNo &&
-                    effectiveSelected?.trnTimestamp === t.trnTimestamp
-                  }
-                  onSelect={() => setSelected(t)}
-                />
-              ))}
+            {/* Left: Transaction List + Download Button */}
+            <div className="flex flex-col">
+              <div className="flex-1 space-y-4 max-h-[80vh] overflow-y-auto no-scrollbar">
+                <h2 className="text-xl text-amber-500 font-semibold mb-4">
+                  Recent Transactions
+                </h2>
+                {transactions.map((t) => (
+                  <TransactionItem
+                    key={t.recptNo + t.trnTimestamp}
+                    transaction={t}
+                    isSelected={
+                      effectiveSelected?.recptNo === t.recptNo &&
+                      effectiveSelected?.trnTimestamp === t.trnTimestamp
+                    }
+                    onSelect={() => setSelected(t)}
+                  />
+                ))}
+              </div>
+
+              {/* Download PDF Button */}
+              <div className="mt-6">
+                <Button
+                  onClick={downloadPDF}
+                  className="w-full bg-amber-500 hover:bg-[#356d7a] text-white"
+                  size="lg"
+                >
+                  <Download className="mr-2 h-5 w-5" />
+                  Download PDF Report
+                </Button>
+              </div>
             </div>
 
             {/* Right: Selected Transaction Details */}
