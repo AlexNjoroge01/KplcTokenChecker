@@ -64,8 +64,8 @@ export function DashboardScreen({ transactions, loading, error, onFinish }: Prop
   };
 
   return (
-    <div className="min-h-screen bg-[#16262e] text-white p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="h-screen bg-[#16262e] text-white p-4 md:p-8 overflow-hidden flex flex-col">
+      <div className="max-w-7xl mx-auto flex flex-col h-full">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl text-amber-500 font-bold">KPLC Token History</h1>
           <Button
@@ -78,33 +78,31 @@ export function DashboardScreen({ transactions, loading, error, onFinish }: Prop
         </div>
 
         {loading && (
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-8 flex-1 overflow-hidden">
+            <div className="space-y-4 overflow-y-auto">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-28 bg-[#2e4756]/50 rounded-lg" />
               ))}
             </div>
-            <Skeleton className="h-96 bg-[#2e4756]/50 rounded-xl" />
+            <Skeleton className="h-full bg-[#2e4756]/50 rounded-xl" />
           </div>
         )}
 
         {error && (
-          <Card className="bg-red-900/30 border-red-800">
+          <Card className="bg-red-900/30 border-red-800 flex-1 overflow-hidden">
             <CardHeader>
               <CardTitle className="text-red-400">Error</CardTitle>
             </CardHeader>
-            <CardContent className="text-white">{error}</CardContent>
+            <CardContent className="text-white overflow-y-auto">{error}</CardContent>
           </Card>
         )}
 
         {transactions && transactions.length > 0 && !loading && !error && (
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-2 gap-8 flex-1 overflow-hidden">
             {/* Left: Transaction List + Download Button */}
-            <div className="flex flex-col">
-              <div className="flex-1 space-y-4 max-h-[80vh] overflow-y-auto no-scrollbar">
-                <h2 className="text-xl text-amber-500 font-semibold mb-4">
-                  Recent Transactions
-                </h2>
+            <div className="flex flex-col h-full overflow-hidden">
+              <h2 className="text-xl text-amber-500 font-semibold mb-4">Recent Transactions</h2>
+              <div className="flex-1 space-y-4 overflow-y-auto no-scrollbar">
                 {transactions.map((t) => (
                   <TransactionItem
                     key={t.recptNo + t.trnTimestamp}
@@ -132,7 +130,7 @@ export function DashboardScreen({ transactions, loading, error, onFinish }: Prop
             </div>
 
             {/* Right: Selected Transaction Details */}
-            <div className="bg-[#2e4756]/30 rounded-xl p-6 md:p-8">
+            <div className="bg-[#2e4756]/30 rounded-xl p-6 md:p-8 overflow-y-auto no-scrollbar">
               {effectiveSelected ? (
                 <TransactionDetails transaction={effectiveSelected} />
               ) : (
@@ -145,7 +143,7 @@ export function DashboardScreen({ transactions, loading, error, onFinish }: Prop
         )}
 
         {transactions && transactions.length === 0 && !loading && (
-          <div className="text-center py-20 text-[#9fa2b2]">
+          <div className="text-center py-20 text-[#9fa2b2] flex-1">
             No transactions found for this meter.
           </div>
         )}
