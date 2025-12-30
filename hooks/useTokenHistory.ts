@@ -1,10 +1,31 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import type { TokenHistoryResponse, Transaction } from "@/types/api";
+import type { Transaction } from "@/types/api";
 
-// Using a reliable public CORS proxy
 const PROXY_URL = "https://api.allorigins.win/raw?url=";
 const API_BASE = "https://denniskabui.com/projects/my-kplc-token/api/tokens";
+
+// Simple retry function for fetch with backoff
+async function fetchWithRetry(url: string, retries: number = 3, delay: number = 1000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        if (res.status >= 500 && res.status < 600 && attempt < retries) {
+          await new Promise((resolve) => setTimeout(resolve, delay * attempt)); // Exponential backoff
+          continue;
+        }
+        throw new Error(`HTTP ${res.status}: Failed to fetch`);
+      }
+      return res;
+    } catch (err) {
+      if (attempt === retries) {
+        throw err;
+      }
+    }
+  }
+  throw new Error("Max retries reached");
+}
 
 export function useTokenHistory() {
   const [data, setData] = useState<Transaction[] | null>(null);
@@ -19,9 +40,7 @@ export function useTokenHistory() {
 
     try {
       const url = `${PROXY_URL}${encodeURIComponent(`${API_BASE}/${meter.trim()}`)}`;
-      const res = await fetch(url);
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch`);
+      const res = await fetchWithRetry(url);
 
       const json: unknown = await res.json();
 
@@ -44,12 +63,12 @@ export function useTokenHistory() {
         setData(transactions);
         toast.success(`Loaded ${transactions.length} transactions!`);
       } else {
-        throw new Error("No transactions found for this meter");
+        throw new Error("No transactions found or invalid response");
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Network or unknown error";
       setError(msg);
-      toast.error(msg);
+      toast.error("The API server seems to be experiencing issues (HTTP 500/520). This is not your fault — the external service is unstable. Please try again later.", { duration: 8000 });
     } finally {
       setLoading(false);
       toast.dismiss();
