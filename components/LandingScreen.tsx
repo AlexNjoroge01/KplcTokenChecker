@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Zap } from "lucide-react";
+import { PlugZap } from "lucide-react";
 
 interface Props {
   onOpenModal: () => void;
@@ -12,7 +12,7 @@ export function LandingScreen({ onOpenModal }: Props) {
         <div className="bg-[#2e4756] rounded-2xl shadow-2xl p-12 text-center space-y-10 border border-[#9fa2b2]/20">
           {/* Icon */}
           <div className="mx-auto w-24 h-24 bg-[#3c7a89] rounded-full flex items-center justify-center">
-            <Zap className="h-14 w-14 text-amber-500" />
+            <PlugZap className="h-14 w-14 text-amber-500" />
           </div>
 
           {/* Title */}

@@ -33,8 +33,8 @@ export function TransactionDetails({ transaction }: Props) {
         </Button>
       </div>
 
-      {/* Metadata Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Metadata Grid - stacked rows, scrollable */}
+      <div className="max-h-[60vh] overflow-y-auto space-y-4">
         <div className="bg-[#2e4756] rounded-lg p-4">
           <p className="text-[#9fa2b2] text-sm">Date Purchased</p>
           <p className="text-white font-medium">
