@@ -1,8 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TransactionTable } from "./TransactionTable";
-import { CostBreakdownChart } from "./CostBreakdownChart";
+import { TransactionItem } from "./TransactionItem";
+import { TransactionDetails } from "./TransactionDetails";
 import type { Transaction } from "@/types/api";
 
 interface Props {
@@ -13,57 +16,79 @@ interface Props {
 }
 
 export function DashboardScreen({ transactions, loading, error, onFinish }: Props) {
+  const [selected, setSelected] = useState<Transaction | null>(null);
+
+  // Derived selection: auto-select first transaction when data loads and nothing is selected
+  const effectiveSelected = selected ?? (transactions && transactions.length > 0 ? transactions[0] : null);
+
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">KPLC Token History</h1>
-          <Button onClick={onFinish} variant="outline">
+    <div className="min-h-screen bg-[#16262e] text-white p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl text-amber-500 font-bold">KPLC Token History</h1>
+          <Button
+            onClick={onFinish}
+            variant="outline"
+            className="border-[#9fa2b2] bg-amber-500 text-white hover:bg-[#9fa2b2]/10"
+          >
             Finish
           </Button>
         </div>
 
         {loading && (
           <div className="grid md:grid-cols-2 gap-8">
-            <Card>
-              <CardHeader><Skeleton className="h-8 w-40" /></CardHeader>
-              <CardContent><Skeleton className="h-64 w-full" /></CardContent>
-            </Card>
-            <Card>
-              <CardHeader><Skeleton className="h-8 w-40" /></CardHeader>
-              <CardContent><Skeleton className="h-64 w-full rounded-full" /></CardContent>
-            </Card>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-28 bg-[#2e4756]/50 rounded-lg" />
+              ))}
+            </div>
+            <Skeleton className="h-96 bg-[#2e4756]/50 rounded-xl" />
           </div>
         )}
 
         {error && (
-          <Card className="border-destructive">
+          <Card className="bg-red-900/30 border-red-800">
             <CardHeader>
-              <CardTitle className="text-destructive">Error</CardTitle>
+              <CardTitle className="text-red-400">Error</CardTitle>
             </CardHeader>
-            <CardContent>{error}</CardContent>
+            <CardContent className="text-white">{error}</CardContent>
           </Card>
         )}
 
-        {transactions && !loading && !error && (
+        {transactions && transactions.length > 0 && !loading && !error && (
           <div className="grid md:grid-cols-2 gap-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TransactionTable transactions={transactions} />
-              </CardContent>
-            </Card>
+            {/* Left: Transaction List */}
+            <div className="space-y-4 max-h-[80vh] overflow-y-auto no-scrollbar">
+              <h2 className="text-xl text-amber-500 font-semibold mb-4">Recent Transactions</h2>
+              {transactions.map((t) => (
+                <TransactionItem
+                  key={t.recptNo + t.trnTimestamp}
+                  transaction={t}
+                  isSelected={
+                    effectiveSelected?.recptNo === t.recptNo &&
+                    effectiveSelected?.trnTimestamp === t.trnTimestamp
+                  }
+                  onSelect={() => setSelected(t)}
+                />
+              ))}
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Cost Breakdown</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CostBreakdownChart transactions={transactions} />
-              </CardContent>
-            </Card>
+            {/* Right: Selected Transaction Details */}
+            <div className="bg-[#2e4756]/30 rounded-xl p-6 md:p-8">
+              {effectiveSelected ? (
+                <TransactionDetails transaction={effectiveSelected} />
+              ) : (
+                <div className="text-center text-[#9fa2b2] py-20">
+                  Select a transaction to view details
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {transactions && transactions.length === 0 && !loading && (
+          <div className="text-center py-20 text-[#9fa2b2]">
+            No transactions found for this meter.
           </div>
         )}
       </div>
