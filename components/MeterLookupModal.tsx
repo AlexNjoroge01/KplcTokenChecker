@@ -40,7 +40,7 @@ export function MeterLookupModal({ open, onOpenChange, onSubmit }: Props) {
               id="meter"
               value={meter}
               onChange={(e) => setMeter(e.target.value.replace(/\D/g, "").slice(0, 11))}
-              placeholder="e.g. 54603460111"
+              placeholder="e.g. 52473463179"
               className="bg-[#16262e] border-[#9fa2b2]/50 text-white placeholder:text-[#9fa2b2]/50 text-lg h-14 focus:border-[#3c7a89]"
               maxLength={11}
             />
